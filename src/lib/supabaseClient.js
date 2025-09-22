@@ -3,6 +3,13 @@ import { createBrowserClient, createServerClient } from '@supabase/ssr'
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY
 
+// Debug logging for Netlify deployment
+console.log('🔍 SupabaseClient Debug:')
+console.log('  - supabaseUrl:', supabaseUrl)
+console.log('  - supabaseAnonKey present:', !!supabaseAnonKey)
+console.log('  - supabaseAnonKey length:', supabaseAnonKey?.length || 0)
+console.log('  - Environment:', import.meta.env.SSR ? 'SSR' : 'Client')
+
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables. Required: PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY')
 }
