@@ -1,0 +1,432 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { getSupabase } from '../lib/supabaseClient.js';
+
+// Fetch categories from database
+const supabase = getSupabase(Astro);
+const { data: categories, error: categoriesError } = await supabase
+  .from('category_pages')
+  .select('category_name, slug')
+  .order('category_name');
+
+if (categoriesError) {
+  console.error('Error fetching categories:', categoriesError);
+}
+---
+
+<Layout title="List Your Business - Abbotsford's Best" description="Submit your business to be featured on Abbotsford's Best">
+  <Header />
+
+  <!-- Hero Section -->
+  <section class="bg-primary-700 text-white py-16">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <h1 class="text-4xl lg:text-5xl font-bold mb-6">List Your Business</h1>
+      <p class="text-xl text-primary-100">
+        Join Abbotsford's Best and get discovered by more local customers
+      </p>
+    </div>
+  </section>
+
+  <!-- Form Section -->
+  <section class="py-16 bg-gray-50">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Success/Error Messages -->
+      <div id="form-message" class="mb-6 hidden">
+        <div id="success-message" class="hidden bg-green-50 border border-green-200 rounded-xl p-4">
+          <div class="flex">
+            <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+            </svg>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-green-800">Submission Successful!</h3>
+              <p id="success-text" class="text-sm text-green-700 mt-1">Thank you! Your business submission has been received and will be reviewed within 2-3 business days.</p>
+            </div>
+          </div>
+        </div>
+        
+        <div id="error-message" class="hidden bg-red-50 border border-red-200 rounded-xl p-4">
+          <div class="flex">
+            <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+            </svg>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-red-800">Submission Failed</h3>
+              <p id="error-text" class="text-sm text-red-700 mt-1">There was an error submitting your business. Please try again or contact support.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-lg p-8">
+        <form id="business-submission-form" class="space-y-6">
+          <!-- Business Name -->
+          <div>
+            <label for="business-name" class="block text-sm font-medium text-gray-700 mb-2">
+              Business Name *
+            </label>
+            <input 
+              type="text" 
+              id="business-name" 
+              name="business-name" 
+              required
+              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              placeholder="Enter your business name"
+            />
+          </div>
+
+          <!-- Logo Upload -->
+          <div>
+            <label for="logo" class="block text-sm font-medium text-gray-700 mb-2">
+              Business Logo
+            </label>
+            <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-primary-400 transition-colors duration-200">
+              <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+              </svg>
+              <p class="text-gray-600 mb-2">Click to upload or drag and drop</p>
+              <p class="text-sm text-gray-500">PNG, JPG, GIF up to 2MB</p>
+              <input type="file" id="logo" name="logo" accept="image/*" class="hidden" />
+            </div>
+          </div>
+
+          <!-- Address -->
+          <div>
+            <label for="address" class="block text-sm font-medium text-gray-700 mb-2">
+              Business Address *
+            </label>
+            <input 
+              type="text" 
+              id="address" 
+              name="address" 
+              required
+              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              placeholder="123 Main Street, Abbotsford, BC"
+            />
+          </div>
+
+          <!-- Phone & Email -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">
+                Phone Number *
+              </label>
+              <input 
+                type="tel" 
+                id="phone" 
+                name="phone" 
+                required
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                placeholder="(604) 555-1234"
+              />
+            </div>
+            <div>
+              <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                Email Address *
+              </label>
+              <input 
+                type="email" 
+                id="email" 
+                name="email" 
+                required
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                placeholder="hello@yourbusiness.com"
+              />
+            </div>
+          </div>
+
+          <!-- Website -->
+          <div>
+            <label for="website" class="block text-sm font-medium text-gray-700 mb-2">
+              Website URL *
+            </label>
+            <input 
+              type="url" 
+              id="website" 
+              name="website" 
+              required
+              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              placeholder="https://www.yourbusiness.com"
+            />
+          </div>
+
+          <!-- Categories -->
+          <div>
+            <label for="categories" class="block text-sm font-medium text-gray-700 mb-2">
+              Business Categories *
+            </label>
+            <select 
+              id="categories" 
+              name="categories" 
+              multiple 
+              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            >
+              {categories && categories.map((category) => (
+                <option value={category.slug}>{category.category_name}</option>
+              ))}
+            </select>
+            <p class="text-sm text-gray-500 mt-2">Hold Ctrl/Cmd to select multiple categories</p>
+            <div id="categories-error" class="text-red-600 text-sm mt-1 hidden">
+              Please select at least one category or suggest a new category below.
+            </div>
+          </div>
+
+          <!-- Suggest New Category -->
+          <div>
+            <label for="new-category" class="block text-sm font-medium text-gray-700 mb-2">
+              Suggest New Category (Optional)
+            </label>
+            <input 
+              type="text" 
+              id="new-category" 
+              name="new-category"
+              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              placeholder="e.g., Pet Services, Tutoring, etc."
+            />
+            <p class="text-sm text-gray-500 mt-2">
+              If you suggest a new category, you don't need to select from the categories above. New categories require admin approval.
+            </p>
+          </div>
+
+          <!-- Business Description -->
+          <div>
+            <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+              Business Description *
+            </label>
+            <textarea 
+              id="description" 
+              name="description" 
+              rows="4" 
+              required
+              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              placeholder="Describe your business, services, and what makes you special..."
+            ></textarea>
+          </div>
+
+          <!-- Backlink Proof URL -->
+          <div>
+            <label for="backlink-url" class="block text-sm font-medium text-gray-700 mb-2">
+              Backlink Proof URL (Optional)
+            </label>
+            <input 
+              type="url" 
+              id="backlink-url" 
+              name="backlink-url"
+              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              placeholder="https://yourwebsite.com/page-with-link-to-us"
+            />
+            <p class="text-sm text-gray-500 mt-2">
+              Link to Abbotsford's Best from your website to be featured as a "Friend of Abbotsford's Best"
+            </p>
+          </div>
+
+          <!-- Friends and Similar Checkboxes -->
+          <!-- Terms of Service -->
+          <div class="flex items-start space-x-3">
+            <input 
+              type="checkbox" 
+              id="terms" 
+              name="terms" 
+              required
+              class="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+            />
+            <label for="terms" class="text-sm text-gray-700">
+              I agree to the <a href="/terms" class="text-primary-700 hover:underline">Terms of Service</a> 
+              and <a href="/privacy" class="text-primary-700 hover:underline">Privacy Policy</a> *
+            </label>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="text-center pt-6">
+            <button 
+              type="submit"
+              class="bg-primary-700 text-white px-12 py-4 rounded-xl hover:bg-primary-800 transition-colors duration-200 font-medium text-lg"
+            >
+              Submit Business for Review
+            </button>
+            <p class="text-sm text-gray-500 mt-4">
+              Your submission will be reviewed within 2-3 business days.
+            </p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+</Layout>
+
+<script>
+import { supabase } from '../lib/supabaseClient.js';
+
+// Handle file upload
+document.addEventListener('DOMContentLoaded', function() {
+  const fileInput = document.getElementById('logo');
+  const dropZone = fileInput?.parentElement;
+  const form = document.getElementById('business-submission-form');
+  const formMessage = document.getElementById('form-message');
+  const successMessage = document.getElementById('success-message');
+  const errorMessage = document.getElementById('error-message');
+  const successText = document.getElementById('success-text');
+  const errorText = document.getElementById('error-text');
+
+  // Function to show success message
+  function showSuccessMessage(message) {
+    formMessage.classList.remove('hidden');
+    successMessage.classList.remove('hidden');
+    errorMessage.classList.add('hidden');
+    successText.textContent = message;
+    
+    // Scroll to message
+    formMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+      formMessage.classList.add('hidden');
+      successMessage.classList.add('hidden');
+    }, 5000);
+  }
+
+  // Function to show error message
+  function showErrorMessage(message) {
+    formMessage.classList.remove('hidden');
+    errorMessage.classList.remove('hidden');
+    successMessage.classList.add('hidden');
+    errorText.textContent = message;
+    
+    // Scroll to message
+    formMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    // Auto-hide after 8 seconds (longer for errors so users can read them)
+    setTimeout(() => {
+      formMessage.classList.add('hidden');
+      errorMessage.classList.add('hidden');
+    }, 8000);
+  }
+  
+  dropZone?.addEventListener('click', function() {
+    fileInput?.click();
+  });
+
+  dropZone?.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    dropZone.classList.add('border-primary-400');
+  });
+
+  dropZone?.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    dropZone.classList.remove('border-primary-400');
+  });
+
+  dropZone?.addEventListener('drop', function(e) {
+    e.preventDefault();
+    dropZone.classList.remove('border-primary-400');
+    
+    const files = e.dataTransfer?.files;
+    if (files && files.length > 0 && fileInput) {
+      fileInput.files = files;
+    }
+  });
+
+  // Handle form submission
+  if (form) {
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      // Custom validation for categories
+      const categorySelect = form.querySelector('#categories');
+      const newCategoryInput = form.querySelector('#new-category');
+      const categoriesError = form.querySelector('#categories-error');
+      
+      const selectedCategories = Array.from(categorySelect.selectedOptions).map(option => option.value);
+      const newCategoryValue = newCategoryInput.value.trim();
+      
+      // Reset error state
+      categoriesError.classList.add('hidden');
+      categorySelect.classList.remove('border-red-500');
+      newCategoryInput.classList.remove('border-red-500');
+      
+      // Validate that either categories are selected OR a new category is suggested
+      if (selectedCategories.length === 0 && !newCategoryValue) {
+        categoriesError.classList.remove('hidden');
+        categorySelect.classList.add('border-red-500');
+        newCategoryInput.classList.add('border-red-500');
+        
+        // Scroll to the error
+        categorySelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      
+      // Show loading state
+      const submitButton = form.querySelector('button[type="submit"]');
+      const originalText = submitButton.textContent;
+      submitButton.textContent = 'Submitting...';
+      submitButton.disabled = true;
+      
+      try {
+        // Collect form data
+        const formData = new FormData(form);
+        
+        // Prepare submission data
+        const submissionData = {
+          name: formData.get('business-name'),
+          address: formData.get('address'),
+          phone: formData.get('phone'),
+          email: formData.get('email'),
+          website: formData.get('website'),
+          categories: selectedCategories,
+          new_category: formData.get('new-category') || null,
+          description: formData.get('description'),
+          backlink_url: formData.get('backlink-url') || null,
+          friends: formData.get('friends') === 'on',
+          similar: formData.get('similar') === 'on'
+        };
+        
+        // Handle logo upload if present
+        const logoFile = formData.get('logo');
+        if (logoFile && logoFile.size > 0) {
+          const fileExt = logoFile.name.split('.').pop();
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+          
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('business-logos')
+            .upload(fileName, logoFile);
+            
+          if (uploadError) {
+            console.error('Logo upload error:', uploadError);
+          } else {
+            const { data: { publicUrl } } = supabase.storage
+              .from('business-logos')
+              .getPublicUrl(fileName);
+            submissionData.logo_url = publicUrl;
+          }
+        }
+        
+        // Insert into database
+        const { data, error } = await supabase
+          .from('business_submissions')
+          .insert([submissionData])
+          .select();
+          
+        if (error) {
+          throw error;
+        }
+        
+        // Success feedback
+        showSuccessMessage('Thank you! Your business submission has been received and will be reviewed within 2-3 business days.');
+        form.reset();
+        
+      } catch (error) {
+        console.error('Submission error:', error);
+        showErrorMessage('There was an error submitting your business. Please try again or contact support.');
+      } finally {
+        // Reset button state
+        submitButton.textContent = originalText;
+        submitButton.disabled = false;
+      }
+    });
+  }
+});
+</script>
+</Layout>

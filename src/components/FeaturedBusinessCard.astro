@@ -1,0 +1,42 @@
+---
+export interface Props {
+  business: {
+    name: string;
+    logo?: string;
+    description: string;
+    website: string;
+    category: string;
+  };
+}
+
+const { business } = Astro.props;
+---
+
+<div class="bg-gray-900 rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full text-white">
+  <div class="p-6">
+    <div class="flex items-center justify-center mb-6">
+      {business.logo ? (
+        <img src={business.logo} alt={`${business.name} logo`} class="w-20 h-20 rounded-xl object-cover shadow-md" />
+      ) : (
+        <div class="w-20 h-20 bg-gray-700 rounded-xl flex items-center justify-center">
+          <span class="text-gray-400 font-semibold text-xs">LOGO</span>
+        </div>
+      )}
+    </div>
+    
+    <div class="text-center">
+      <span class="inline-block bg-primary-600 text-white px-4 py-2 rounded-full text-xs font-medium mb-4 uppercase tracking-wide">
+        {business.category}
+      </span>
+      <h3 class="font-bold text-xl text-white mb-3">{business.name}</h3>
+      <div class="flex items-center justify-center mb-4">
+        <span class="text-yellow-400 text-lg">★★★★★</span>
+      </div>
+      <p class="text-gray-300 text-sm mb-6 leading-relaxed">{business.description}</p>
+      <a href={business.website} target="_blank" rel="noopener noreferrer" 
+         class="inline-block bg-primary-600 text-white px-8 py-3 rounded-xl hover:bg-primary-700 transition-colors duration-200 text-sm font-medium shadow-lg">
+        Learn More
+      </a>
+    </div>
+  </div>
+</div>

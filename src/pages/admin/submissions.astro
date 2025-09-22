@@ -1,0 +1,294 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import SubmissionRow from '../../components/SubmissionRow.astro';
+import BusinessSubmissionEditModal from '../../components/BusinessSubmissionEditModal.astro';
+import { getSupabase } from '../../lib/supabaseClient.js';
+
+// Check authentication and admin role
+const supabase = getSupabase(Astro);
+const { data: { session } } = await supabase.auth.getSession();
+
+console.log('Session data:', session);
+
+if (!session) {
+  console.log('No session found, redirecting to login');
+  return Astro.redirect('/admin/login');
+}
+
+// Check if user has admin role
+const { data: profile, error: profileError } = await supabase
+  .from('profiles')
+  .select('role')
+  .eq('id', session.user.id)
+  .single();
+
+console.log('Profile data:', profile);
+if (profileError) {
+  console.log('Profile error:', profileError);
+}
+
+if (profileError || !profile || profile.role !== 'admin') {
+  console.log('User is not admin or profile error, redirecting to home');
+  console.log('Profile role:', profile?.role);
+  return Astro.redirect('/');
+}
+
+// Fetch all business submissions
+const { data: submissions, error } = await supabase
+  .from('business_submissions')
+  .select('*')
+  .order('created_at', { ascending: false });
+
+if (error) {
+  console.error('Error fetching submissions:', error);
+}
+
+// Fetch categories for the edit modal
+const { data: categories, error: categoriesError } = await supabase
+  .from('category_pages')
+  .select('category_name, slug')
+  .order('category_name');
+
+if (categoriesError) {
+  console.error('Error fetching categories:', categoriesError);
+}
+
+const pendingCount = submissions?.filter(s => s.status === 'pending').length || 0;
+const approvedCount = submissions?.filter(s => s.status === 'approved').length || 0;
+const rejectedCount = submissions?.filter(s => s.status === 'rejected').length || 0;
+---
+
+<Layout title="Admin Panel - Business Submissions" description="Manage business submissions for Abbotsford's Best">
+  <Header />
+
+  <!-- Admin Header -->
+  <section class="bg-gray-900 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold mb-2">Admin Panel</h1>
+          <p class="text-gray-300">Manage business submissions and listings</p>
+        </div>
+        <div class="bg-primary-600 px-4 py-2 rounded-lg">
+          <span class="text-sm font-medium">Total Submissions: {submissions?.length || 0}</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Cards -->
+  <section class="py-8 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
+          <div class="flex items-center">
+            <div class="bg-yellow-500 p-3 rounded-lg">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-yellow-800">Pending Review</p>
+              <p class="text-2xl font-bold text-yellow-900">{pendingCount}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-green-50 border border-green-200 rounded-xl p-6">
+          <div class="flex items-center">
+            <div class="bg-green-500 p-3 rounded-lg">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-green-800">Approved</p>
+              <p class="text-2xl font-bold text-green-900">{approvedCount}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-red-50 border border-red-200 rounded-xl p-6">
+          <div class="flex items-center">
+            <div class="bg-red-500 p-3 rounded-lg">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-red-800">Rejected</p>
+              <p class="text-2xl font-bold text-red-900">{rejectedCount}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Submissions Table -->
+  <section class="py-8 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-xl font-semibold text-gray-900">Business Submissions</h2>
+        </div>
+        
+        {submissions && submissions.length > 0 ? (
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Business</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categories</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                {submissions.map((submission) => (
+                  <SubmissionRow submission={submission} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div class="px-6 py-12 text-center">
+            <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No submissions yet</h3>
+            <p class="text-gray-500">Business submissions will appear here once they're submitted.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  </section>
+
+  <!-- Business Edit Modal -->
+  <BusinessSubmissionEditModal categories={categories || []} />
+
+  <Footer />
+</Layout>
+
+<script>
+// Add client-side functionality for admin actions
+document.addEventListener('DOMContentLoaded', function() {
+  // Handle status update buttons (approve/reject only)
+  document.querySelectorAll('[data-action="approve"], [data-action="reject"]').forEach(button => {
+    button.addEventListener('click', async function() {
+      const action = this.dataset.action;
+      const submissionId = this.dataset.submissionId;
+      
+      if (!submissionId) return;
+      
+      // Confirm action
+      const confirmMessage = action === 'approve' ? 'approve' : 'reject';
+      if (!confirm(`Are you sure you want to ${confirmMessage} this submission?`)) {
+        return;
+      }
+      
+      try {
+        // Update status in database
+        const response = await fetch('/api/admin/update-submission', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id: submissionId,
+            status: action === 'approve' ? 'approved' : 'rejected'
+          })
+        });
+        
+        if (response.ok) {
+          // Reload page to show updated status
+          window.location.reload();
+        } else {
+          alert('Error updating submission status');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error updating submission status');
+      }
+    });
+  });
+  
+  // Handle delete buttons
+  document.querySelectorAll('[data-action="delete"]').forEach(button => {
+    button.addEventListener('click', async function() {
+      const submissionId = this.dataset.submissionId;
+      
+      if (!submissionId) return;
+      
+      // Confirm deletion
+      if (!confirm('Are you sure you want to delete this submission? This action cannot be undone.')) {
+        return;
+      }
+      
+      try {
+        // Delete submission from database
+        const response = await fetch('/api/admin/submissions/delete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id: submissionId
+          })
+        });
+        
+        if (response.ok) {
+          // Reload page to show updated list
+          window.location.reload();
+        } else {
+          const error = await response.json().catch(() => ({}));
+          alert(`Error deleting submission: ${error.error || 'Unknown error'}`);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error deleting submission');
+      }
+    });
+  });
+  
+  // Handle edit buttons separately (no confirmation needed)
+  document.querySelectorAll('[data-action="edit"]').forEach(button => {
+    button.addEventListener('click', function() {
+      const submissionId = this.dataset.submissionId;
+      
+      // Dispatch custom event to open edit modal
+      const event = new CustomEvent('openBusinessEditModal', {
+        detail: { 
+          submissionId,
+          reloadOnSuccess: true // Reload page for submissions management
+        }
+      });
+      document.dispatchEvent(event);
+    });
+  });
+  
+  // Handle business processed event
+  document.addEventListener('businessProcessed', function(e) {
+    const { shouldReloadPage } = e.detail;
+    
+    if (shouldReloadPage) {
+      window.location.reload();
+    }
+  });
+  
+  // Handle view buttons (if needed in the future)
+  document.querySelectorAll('[data-action="view"]').forEach(button => {
+    button.addEventListener('click', function() {
+      const submissionId = this.dataset.submissionId;
+      // Toggle the details row
+      const detailsRow = document.getElementById(`details-${submissionId}`);
+      if (detailsRow) {
+        detailsRow.classList.toggle('hidden');
+      }
+    });
+  });
+});
+</script>

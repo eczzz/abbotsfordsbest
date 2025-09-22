@@ -1,0 +1,72 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import SearchBar from '../components/SearchBar.jsx';
+import CategoryCard from '../components/CategoryCard.astro';
+import Footer from '../components/Footer.astro';
+import { getSupabase } from '../lib/supabaseClient.js';
+
+// Fetch categories from database
+const supabase = getSupabase(Astro);
+const { data: categoryPages, error: categoriesError } = await supabase
+  .from('category_pages')
+  .select('*')
+  .order('category_name');
+
+if (categoriesError) {
+  console.error('Error fetching categories:', categoriesError);
+}
+
+// Transform category pages to match the expected format
+const categories = categoryPages ? categoryPages.map((category, index) => {
+  return {
+    name: category.category_name,
+    slug: category.slug,
+    description: category.description,
+    icon_name: category.icon_name || 'Building',
+    businessCount: Math.floor(Math.random() * 50) + 10 // Random count for now
+  };
+}) : [];
+---
+
+<Layout title="Find Businesses - Abbotsford's Best" description="Find the best businesses in Abbotsford across all categories">
+  <Header />
+
+  <!-- Hero Section -->
+  <section class="bg-primary-700 text-white py-16">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <h1 class="text-4xl lg:text-5xl font-bold mb-6">Find Businesses</h1>
+      <p class="text-xl text-primary-100 mb-8">
+        Search for the best local businesses in Abbotsford across all categories
+      </p>
+      
+      <div class="mb-8">
+        <SearchBar client:load placeholder="Search categories..." />
+      </div>
+
+      <button class="bg-white text-primary-700 px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors duration-200 font-medium">
+        I'm Feeling Lucky
+      </button>
+    </div>
+  </section>
+
+  <!-- Categories Grid -->
+  <section class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-gray-900 mb-4">Browse All Categories</h2>
+        <p class="text-gray-600">
+          Discover businesses across all industries in Abbotsford
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {categories.map((category) => (
+          <CategoryCard category={category} />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+</Layout>

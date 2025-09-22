@@ -1,0 +1,207 @@
+---
+import { getSupabase } from '../lib/supabaseClient.js';
+
+// Check authentication status and user role
+const supabase = getSupabase(Astro);
+const { data: { session } } = await supabase.auth.getSession();
+let isAdmin = false;
+
+if (session) {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', session.user.id)
+    .single();
+  
+  isAdmin = profile?.role === 'admin';
+}
+---
+
+<header class="bg-primary-700 text-white shadow-lg">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center h-16">
+      <!-- Logo -->
+      <div class="flex items-center">
+        <a href="/" class="flex items-center space-x-2">
+          <div class="text-2xl font-bold tracking-tight">
+            #AB<span class="bg-white text-primary-700 px-1 rounded">BEST</span>
+          </div>
+        </a>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="hidden md:block">
+        <div class="flex items-center space-x-8">
+          <a href="/find" class="hover:text-primary-200 transition-colors duration-200">Find Businesses</a>
+          <a href="/list-business" class="hover:text-primary-200 transition-colors duration-200">Add Business</a>
+          {isAdmin && (
+            <div class="relative group">
+              <button class="hover:text-primary-200 transition-colors duration-200 flex items-center">
+                Admin Panel
+                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+              <div class="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <a href="/admin/submissions" class="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-t-lg">Submissions</a>
+                <a href="/admin/categories" class="block px-4 py-2 text-gray-700 hover:bg-gray-50">Categories</a>
+                <a href="/admin/import-google-business" class="block px-4 py-2 text-gray-700 hover:bg-gray-50">Import from Google</a>
+                <a href="/admin/find-top-businesses" class="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-b-lg">Find Top Businesses</a>
+              </div>
+            </div>
+          )}
+          <a href="/about" class="hover:text-primary-200 transition-colors duration-200">About Us</a>
+          <a href="/contact" class="hover:text-primary-200 transition-colors duration-200">Contact Us</a>
+          
+          {/* Authentication Links */}
+          {session ? (
+            <div class="relative group">
+              <button class="hover:text-primary-200 transition-colors duration-200 flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+                Account
+                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+              <div class="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <div class="px-4 py-2 text-gray-500 text-sm border-b border-gray-200">
+                  {session.user.email}
+                </div>
+                <button id="logout-btn" class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-b-lg">
+                  Sign Out
+                </button>
+              </div>
+            </div>
+          ) : (
+            <a href="/admin/login" class="bg-primary-600 hover:bg-primary-800 px-4 py-2 rounded-lg transition-colors duration-200">
+              Admin Login
+            </a>
+          )}
+          
+          {/* Social Icons */}
+          <div class="flex items-center space-x-3 ml-4 pl-4 border-l border-primary-600">
+            <a href="#" class="text-primary-200 hover:text-white transition-colors duration-200" aria-label="Follow us on Facebook">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+              </svg>
+            </a>
+            <a href="#" class="text-primary-200 hover:text-white transition-colors duration-200" aria-label="Follow us on X">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Mobile menu button -->
+      <div class="md:hidden">
+        <button type="button" class="text-white hover:text-primary-200" id="mobile-menu-button">
+          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile menu -->
+    <div class="md:hidden hidden" id="mobile-menu">
+      <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-primary-600">
+        <a href="/find" class="block hover:text-primary-200 px-3 py-2">Find Businesses</a>
+        <a href="/list-business" class="block hover:text-primary-200 px-3 py-2">Add Business</a>
+        {isAdmin && (
+          <>
+            <a href="/admin/submissions" class="block hover:text-primary-200 px-3 py-2">Admin Panel</a>
+            <a href="/admin/categories" class="block hover:text-primary-200 px-3 py-2">Admin Categories</a>
+            <a href="/admin/import-google-business" class="block hover:text-primary-200 px-3 py-2">Import from Google</a>
+            <a href="/admin/find-top-businesses" class="block hover:text-primary-200 px-3 py-2">Find Top Businesses</a>
+          </>
+        )}
+        <a href="/about" class="block hover:text-primary-200 px-3 py-2">About Us</a>
+        <a href="/contact" class="block hover:text-primary-200 px-3 py-2">Contact Us</a>
+        
+        {session ? (
+          <div class="px-3 py-2">
+            <div class="text-primary-200 text-sm mb-2">{session.user.email}</div>
+            <button id="mobile-logout-btn" class="text-primary-200 hover:text-white text-sm">
+              Sign Out
+            </button>
+          </div>
+        ) : (
+          <a href="/admin/login" class="block hover:text-primary-200 px-3 py-2">Admin Login</a>
+        )}
+        
+        <div class="flex space-x-4 px-3 py-2">
+          <a href="#" class="text-primary-200 hover:text-white">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+            </svg>
+          </a>
+          <a href="#" class="text-primary-200 hover:text-white">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+import { supabase } from '../lib/supabaseClient.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+  const menuButton = document.getElementById('mobile-menu-button');
+  const mobileMenu = document.getElementById('mobile-menu');
+
+  menuButton?.addEventListener('click', () => {
+    mobileMenu?.classList.toggle('hidden');
+  });
+
+  const logoutButtons = [
+    document.getElementById('logout-btn'),
+    document.getElementById('mobile-logout-btn')
+  ].filter(Boolean);
+
+  const handleLogout = async (event) => {
+    event.preventDefault();
+
+    try {
+      if (supabase?.auth?.signOut) {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+          console.error('Error signing out on client:', error);
+        }
+      }
+    } catch (error) {
+      console.error('Unexpected error during client sign out:', error);
+    }
+
+    try {
+      const response = await fetch('/api/auth/set-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ event: 'SIGNED_OUT' })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        console.error('Failed to synchronize sign-out with server:', errorText || response.statusText);
+      }
+    } catch (error) {
+      console.error('Failed to synchronize sign-out with server:', error);
+    }
+
+    window.location.href = '/admin/login';
+  };
+
+  logoutButtons.forEach((button) => {
+    button.addEventListener('click', handleLogout);
+  });
+});
+</script>
